@@ -1,0 +1,25 @@
+name: Publish QA Deliverables
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: qa-release-${{ github.run_number }}
+          name: QA Deliverables Release ${{ github.run_number }}
+          files: test_document.xlsx
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
