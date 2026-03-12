@@ -1,7 +1,11 @@
-name: Publish QA Deliverables
+name: Publish Cost Sense Release
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag name for the release"
+        required: true
 
 jobs:
   publish:
@@ -11,15 +15,14 @@ jobs:
       contents: write
 
     steps:
-
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release and Upload File
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: qa-release-${{ github.run_number }}
-          name: QA Deliverables Release ${{ github.run_number }}
+          tag_name: ${{ github.event.inputs.tag }}
+          name: cost-sense-release-${{ github.event.inputs.tag }}
           files: test_document.xlsx
         env:
-          GITHUB_TOKEN: ${{ secrets.COSTSENSE_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.COSTSENSE_TOKEN }}
