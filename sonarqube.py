@@ -486,7 +486,7 @@ if __name__ == "__main__":
     sonar_host = os.getenv("SONAR_HOST_URL")
 
     if not project_key:
-    raise ValueError("SONAR_PROJECT_KEY not provided")
+        raise ValueError("SONAR_PROJECT_KEY not provided")
 
     if not github_repo_url:
         raise ValueError("TARGET_REPO_URL not provided")
