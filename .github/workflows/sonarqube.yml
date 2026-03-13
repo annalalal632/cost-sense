@@ -41,6 +41,8 @@ jobs:
         env:
           REPOS: ${{ steps.parse.outputs.repos }}
           BRANCH: ${{ github.event.inputs.branch }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
         run: |
           IFS=',' read -ra REPO_LIST <<< "$REPOS"
 
@@ -62,6 +64,13 @@ jobs:
               -Dsonar.sources=. \
               -Dsonar.exclusions=**/sonarqube.py
 
+            echo "Generating report for $repo_name"
+  
+            export SONAR_PROJECT_KEY=$repo_name
+            export TARGET_REPO_URL=https://github.com/$repo
+      
+            python ../sonarqube.py
+
             cd ..
 
           done
@@ -75,11 +84,11 @@ jobs:
         run: |
           pip install requests pandas jinja2
 
-      - name: Run Sonar Report Script
-        run: python sonarqube.py
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
+      # - name: Run Sonar Report Script
+      #   run: python sonarqube.py
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
 
       - name: Upload Sonar Reports
         uses: actions/upload-artifact@v4
