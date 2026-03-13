@@ -94,12 +94,24 @@ jobs:
       #   env:
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       #     SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
+      - name: Debug report files
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Listing workspace:"
+          ls -R
+          echo "Searching for sonarqube_output folders:"
+          find . -type d -name "sonarqube_output"
+          echo "Searching for report files:"
+          find . -name "*.csv"
+          find . -name "*.html"
+          find . -name "*.zip"
 
       - name: Upload Sonar Reports
         uses: actions/upload-artifact@v4
         with:
           name: sonarqube-report
-          path: sonarqube_output/**/*
+          path: '**/sonarqube_output/**'
 
       - name: Generate Artifact Link
         id: artifact
