@@ -9,7 +9,7 @@ on:
       branch:
         description: "Branch to scan"
         required: false
-        default: "sonar3"
+        default: "main"
 
   schedule:
     - cron: "30 15 * * 5"   # Friday 9PM IST
@@ -42,7 +42,7 @@ jobs:
           do
             echo "Processing $repo"
 
-            git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/$repo.git
+            git clone https://x-access-token:${{ secrets.COSTSENSE_TOKEN }}@github.com/$repo.git
             repo_name=$(basename "$repo")
 
             cd $repo_name
