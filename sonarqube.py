@@ -315,6 +315,8 @@ def extract_vulnerabilities_from_issues(all_issues, sq_config):
             file_path = issue.get("component", "").split(":")[-1]
             line = int(issue.get("line", 1))
             full_path = os.path.join(sq_config.CLONE_DIR, file_path)
+            start = 0
+            end = 0
             try:
                 with open(full_path, "r", encoding="utf-8") as f:
                     lines = f.read().splitlines()
