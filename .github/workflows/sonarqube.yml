@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout workflow repository
+        uses: actions/checkout@v4
       - name: Parse repository list
         id: parse
         run: |
