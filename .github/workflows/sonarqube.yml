@@ -28,6 +28,16 @@ jobs:
     steps:
       - name: Checkout workflow repository
         uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: |
+          pip install requests pandas jinja2
+          
       - name: Parse repository list
         id: parse
         run: |
@@ -77,14 +87,7 @@ jobs:
 
           done
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-
-      - name: Install Dependencies
-        run: |
-          pip install requests pandas jinja2
+      
 
       # - name: Run Sonar Report Script
       #   run: python sonarqube.py
