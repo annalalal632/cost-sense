@@ -2,16 +2,23 @@ name: SonarQube Scan Test
 
 on:
   workflow_dispatch:
+    inputs:
+      repositories:
+        description: "Comma separated repo list (org/repo1,org/repo2)"
+        required: true
+      branch:
+        description: "Branch to scan"
+        required: false
+        default: "sonar3"
 
   schedule:
-    - cron: "30 15 * * 5"   # Every Friday
+    - cron: "30 15 * * 5"   # Friday 9PM IST
 
   push:
     tags:
       - "v*"
 
 env:
-  SONAR_PROJECT_KEY: cost-sense-ipredict
   SONAR_HOST_URL: http://98.70.40.192:9025
 
 jobs:
@@ -19,21 +26,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Parse repository list
+        id: parse
+        run: |
+          echo "repos=${{ github.event.inputs.repositories }}" >> $GITHUB_OUTPUT
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
-        with:
-          args: >
-            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
-            -Dsonar.host.url=${{ env.SONAR_HOST_URL }}
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.sources=.
-            -Dsonar.exclusions=**/sonarqube.py
+      - name: Loop through repositories
+        env:
+          REPOS: ${{ steps.parse.outputs.repos }}
+          BRANCH: ${{ github.event.inputs.branch }}
+        run: |
+          IFS=',' read -ra REPO_LIST <<< "$REPOS"
 
-      - name: Debug Sonar Task
-        run: cat .scannerwork/report-task.txt
+          for repo in "${REPO_LIST[@]}"
+          do
+            echo "Processing $repo"
+
+            git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/$repo.git
+            repo_name=$(basename "$repo")
+
+            cd $repo_name
+
+            echo "Running SonarQube scan for $repo"
+
+            sonar-scanner \
+              -Dsonar.projectKey=$repo_name \
+              -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
+              -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+              -Dsonar.sources=. \
+              -Dsonar.exclusions=**/sonarqube.py
+
+            cd ..
+
+          done
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -49,7 +74,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
-          SONAR_PROJECT_KEY: ${{ env.SONAR_PROJECT_KEY }}
 
       - name: Upload Sonar Reports
         uses: actions/upload-artifact@v4
@@ -76,8 +100,7 @@ jobs:
           body: |
             SonarQube Scan Completed.
 
-            Repository: ${{ github.repository }}
-            Branch/Tag: ${{ github.ref_name }}
+            Repositories: ${{ github.event.inputs.repositories }}
 
             Download Artifact:
             ${{ steps.artifact.outputs.link }}
