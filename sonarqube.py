@@ -480,12 +480,23 @@ def create_zip_report(sq_config):
     return zip_path
     
 if __name__ == "__main__":
+    project_key = os.getenv("SONAR_PROJECT_KEY")
+    github_repo_url = os.getenv("TARGET_REPO_URL")
+    sonar_token = os.getenv("SONAR_TOKEN")
+    sonar_host = os.getenv("SONAR_HOST_URL")
+
+    if not project_key:
+    raise ValueError("SONAR_PROJECT_KEY not provided")
+
+    if not github_repo_url:
+        raise ValueError("TARGET_REPO_URL not provided")
+
     config = SonarQubeConfig(
-        sonarqube_url="http://98.70.40.192:9025/",
-        username="squ_f4b9c1214ac424228a22bdd05b8e96f174587807",
+        sonarqube_url=sonar_host,
+        username=sonar_token,
         password="",
-        project_key="cost-sense-ipredict",
-        github_repo_clone_url="https://github.com/cazelabs/cost-sense-ipredict"
+        project_key=project_key,
+        github_repo_clone_url=github_repo_url
     )
 
     config.CLONE_DIR = os.getenv("GITHUB_WORKSPACE", config.CLONE_DIR)
