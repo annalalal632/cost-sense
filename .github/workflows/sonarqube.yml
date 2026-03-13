@@ -1,58 +1,83 @@
-name: Security & Quality Scans
+name: SonarQube Scan Test
 
 on:
-  push:
-    branches:
-      - sonar3
   workflow_dispatch:
-    inputs:
-      branch:
-        required: false
-        
-        default: "sonar3"
+
+  schedule:
+    - cron: "30 15 * * 5"   # Every Friday
+
+  push:
+    tags:
+      - "v*"
 
 env:
   SONAR_PROJECT_KEY: cost-sense-ipredict
-  SONAR_TOKEN: squ_f4b9c1214ac424228a22bdd05b8e96f174587807
+  SONAR_HOST_URL: http://98.70.40.192:9025
 
 jobs:
   sonarqube-scan:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch || github.ref_name }}
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         with:
           args: >
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
-            -Dsonar.host.url=http://98.70.40.192:9025
-            -Dsonar.login=${{ env.SONAR_TOKEN }}
+            -Dsonar.host.url=${{ env.SONAR_HOST_URL }}
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
             -Dsonar.sources=.
             -Dsonar.exclusions=**/sonarqube.py
-      - name: Debug report-task.txt
+
+      - name: Debug Sonar Task
         run: cat .scannerwork/report-task.txt
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
-      - name: Install Python dependencies
-        run: pip install requests pandas jinja2
+      - name: Install Dependencies
+        run: |
+          pip install requests pandas jinja2
 
-      - name: Run SonarQube report generator
+      - name: Run Sonar Report Script
         run: python sonarqube.py
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
-          SONAR_HOST_URL: http://98.70.40.192:9025
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
           SONAR_PROJECT_KEY: ${{ env.SONAR_PROJECT_KEY }}
 
-      - name: Upload SonarQube Reports
+      - name: Upload Sonar Reports
         uses: actions/upload-artifact@v4
         with:
-          name: sonarqube-reports
+          name: sonarqube-report
           path: sonarqube_output/**/*
+
+      - name: Generate Artifact Link
+        id: artifact
+        run: |
+          echo "link=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      - name: Send Email Notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "SonarQube Scan Report"
+          to: annalalal632@gmail.com
+          from: GitHub Actions
+          body: |
+            SonarQube Scan Completed.
+
+            Repository: ${{ github.repository }}
+            Branch/Tag: ${{ github.ref_name }}
+
+            Download Artifact:
+            ${{ steps.artifact.outputs.link }}
