@@ -11,8 +11,8 @@ on:
         required: false
         default: "main"
 
-  schedule:
-    - cron: "30 15 * * 5"   # Friday 9PM IST
+  # schedule:
+  #   - cron: "30 15 * * 5"   # Friday 9PM IST
 
   push:
     tags:
